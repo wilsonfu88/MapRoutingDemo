@@ -68,6 +68,7 @@
   <ItemGroup>
     <Content Include="ASHX\OpenlayerProxy.ashx" />
     <None Include="packages.config" />
+    <Content Include="README.md" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
