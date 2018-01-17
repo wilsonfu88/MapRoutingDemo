@@ -1,4 +1,4 @@
-﻿运行环境geoserver、postgressql 、postgis
+﻿运行环境geoserver、postgressql 、postgis等
 
 基于pGrouting最短路径导航实例
 
