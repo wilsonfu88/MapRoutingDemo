@@ -1,0 +1,112 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+    <link rel="stylesheet" href="ol/ol.css" type="text/css">
+    <script src="ol/ol-debug.js"></script>
+    <script src="ol/proj4.js"></script>
+    <script src="js/jquery-1.8.0.min.js"></script>
+	<meta charset="utf-8" />
+</head>
+<body>
+    <div id="map" style="width: 100%;height:800px;border:solid 1px red" class="map">
+        <div>
+            id1: <input id="id1" value="30" />
+            id2: <input id="id2" value="66" />
+            <input type="button" value="query" onclick="queryRoute()" />
+        </div>
+    </div>
+</body>
+</html>
+
+
+<script type="text/javascript">
+    var format = 'image/png';
+    var bounds = [501369.9375, 2494100.25,
+        502073, 2495256.25];
+    var mousePositionControl = new ol.control.MousePosition({
+        className: 'custom-mouse-position',
+        target: document.getElementById('location'),
+        coordinateFormat: ol.coordinate.createStringXY(5),
+        undefinedHTML: '&nbsp;'
+    });
+    var tiled = new ol.layer.Tile({
+        visible: true,
+        source: new ol.source.TileWMS({
+            url: 'http://localhost:8080/geoserver/pg_ws/wms',
+            params: {
+                'FORMAT': format,
+                'VERSION': '1.1.1',
+                tiled: true,
+                STYLES: '',
+                LAYERS: 'pg_ws:xmpark_road',
+            }
+        })
+    });
+
+    var cross_tiled = new ol.layer.Tile({
+        //visible: true,
+        source: new ol.source.TileWMS({
+            url: 'http://localhost:8080/geoserver/pg_ws/wms',
+            params: {
+                'FORMAT': format,
+                'VERSION': '1.1.1',
+                tiled: true,
+                STYLES: '',
+                LAYERS: 'pg_ws:xmpark_road_vertices_pgr',
+            }
+        })
+    });
+
+    var projection = new ol.proj.Projection({
+        code: 'EPSG:3857',
+        units: 'm',
+        axisOrientation: 'neu',
+        global: true
+    });
+    var map = new ol.Map({
+        controls: ol.control.defaults({
+            attribution: false
+        }).extend([mousePositionControl]),
+        target: 'map',
+        layers: [
+            tiled, cross_tiled
+        ],
+        view: new ol.View({
+            projection: projection
+        })
+    });
+   
+   
+    map.getView().fit(bounds, map.getSize());
+
+    var routeLayer = null;
+
+    function queryRoute() {
+        if (routeLayer != null) {
+            map.removeLayer(routeLayer);
+        }
+
+        var val1 = $("#id1").val();
+        var val2 = $("#id2").val();
+         routeLayer = new ol.layer.Tile({
+            visible: true,
+            source: new ol.source.TileWMS({
+                url: 'http://localhost:8080/geoserver/pg_ws/wms',
+                params: {
+                    'FORMAT': format,
+                    'VERSION': '1.1.1',
+                    tiled: true,
+                    STYLES: '',
+                    LAYERS: 'pg_ws:xmpark_road_route',
+                    'viewparams': 'a:' + val1 + ';b:' + val2
+                }
+            })
+        });
+
+        map.addLayer(routeLayer);
+    }
+</script>

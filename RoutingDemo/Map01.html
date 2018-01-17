@@ -1,0 +1,81 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+    <link rel="stylesheet" href="ol/ol.css" type="text/css">
+    <script src="ol/ol-debug.js"></script>
+    <script src="ol/proj4.js"></script>
+    <script src="js/jquery-1.8.0.min.js"></script>
+    <meta charset="utf-8" />
+</head>
+<body>
+    <div id="map" style="width: 100%" class="map">
+        <input type="button" value="添加覆盖物" id="btnAddMark" />
+        <input type="button" value="移除覆盖物" id="btnRemoveMark" />
+        <input type="button" value="获取点坐标" id="btnGetPoint" />
+        <input type="button" value="轨迹播放" id="btnPlayTrace" />
+        <span id="spanResult"></span>
+    </div>
+</body>
+</html>
+<script type="text/javascript">
+
+    $(function () {
+
+
+        var format = 'image/png';
+
+        var map = new ol.Map({
+            target: 'map',
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.OSM()
+                    //source: new ol.source.TileWMS({
+                    //    url: 'https://ahocevar.com/geoserver/wms',
+                    //    params: {
+                    //        'LAYERS': 'ne:NE1_HR_LC_SR_W_DR',
+                    //        'TILED': true
+                    //    }
+                    //})
+                })
+            ],
+            view: new ol.View({
+                projection: 'EPSG:4326',
+                center: [114.073176, 22.556201],
+                zoom: 10
+            })
+        })
+
+
+        var sqLayer = new ol.layer.Tile({
+            source: new ol.source.TileWMS({
+                url: 'http://localhost:8080/geoserver/pg_ws/wms',
+                params: {
+                    'FORMAT': format,
+                    'VERSION': '1.1.1',
+                    tiled: true,
+                    STYLES: '',
+                    LAYERS: 'pg_ws:basq',
+                }
+            })
+        });
+
+        map.addLayer(sqLayer);
+
+        $("#btnGetPoint").on("click", function () {
+            map.removeEventListener("singleclick");
+            map.addEventListener("singleclick", function (event) {
+                console.log(event.coordinate);
+                $("#spanResult").html("获取点经纬度坐标为：" + /*proj4('EPSG:3857', 'EPSG:4326', event.coordinate).join(",") + "| 平面坐标为：" +*/ event.coordinate.join(","));
+                //window.android.getXY(event.coordinate[0], event.coordinate[1]);
+            });
+
+        });
+
+        $("#map").height(document.body.scrollHeight-80);
+
+    });
+</script>

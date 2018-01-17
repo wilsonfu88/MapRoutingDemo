@@ -1,0 +1,359 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no,initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <title></title>
+    <script src="js/jquery-1.8.0.min.js"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=1nCQCnDr3Nt3GKDVeBmKGe2Y"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/library/AreaRestriction/1.2/src/AreaRestriction_min.js"></script>
+
+    <style type="text/css">
+        body, html {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            font-family: "微软雅黑";
+        }
+
+        #allmap {
+            width: 100%;
+            height: 800px;
+        }
+
+        #r-result {
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        p {
+            margin: 5px;
+            font-size: 14px;
+        }
+
+        .anchorBL {
+            display: none
+        }
+    </style>
+
+</head>
+<body>
+    <div id="allmap">
+    </div>
+    <div style="position:absolute;top:5px;right:20px; background-color:silver">
+        <input type="checkbox" id="chkTile" />采集员路网
+        <input type="checkbox" id="chkManagerGrid" />责任网格图层
+        <input type="checkbox" id="chkHw" />环卫标段
+        <input type="checkbox" id="chkLh" />绿化标段
+        <input type="checkbox" id="chkHx" />红线范围
+        <%-- <input type="button" onclick="showBnd()" value="showBnd" />--%>
+        <input type="button" onclick="showManagerGrid('440306005D003')" value="责任网格高亮" />
+    </div>
+    <div id="divUrl" style="margin-top:5px;display:none">
+
+    </div>
+</body>
+</html>
+
+<script type="text/javascript">
+    $(function()
+    {
+        //alert(document.body.clientWidth);
+        $("#allmap").height(document.body.clientHeight);
+    })
+    var geoserverUrl = "http://localhost:8080";
+    //var geoserverUrl = "http://10.10.10.32:9090";
+    var map = new BMap.Map('allmap', { minZoom: 12, enableMapClick: false });
+
+    var b = new BMap.Bounds(new BMap.Point(113.755945, 22.445738), new BMap.Point(114.67581, 22.872631));
+    try {
+        //BMapLib.AreaRestriction.setBounds(map, b);
+    } catch (e) {
+        alert(e);
+    }
+
+    map.enableScrollWheelZoom(true);
+    map.addControl(new BMap.NavigationControl());
+    map.centerAndZoom(new BMap.Point(114.189144, 22.690499), 12);
+
+
+    var tileLayer = new BMap.TileLayer({ isTransparentPng: true });
+    var bndLayer = new BMap.TileLayer({ isTransparentPng: true });
+
+    var obTraceLayer = new BMap.TileLayer({ isTransparentPng: true });
+
+    var baRoadTileLayer = new BMap.TileLayer({ isTransparentPng: true });
+
+    var managerGridTileLayer = new BMap.TileLayer({ isTransparentPng: true });
+
+    var hwLayer = new BMap.TileLayer({ isTransparentPng: true });
+    var jdLayer = new BMap.TileLayer({ isTransparentPng: true });
+    var hxLayer = new BMap.TileLayer({ isTransparentPng: true });
+    var lhLayer = new BMap.TileLayer({ isTransparentPng: true });
+
+    tileLayer.getTilesUrl = function (tileCoord, zoom) {
+        return getTilesUrl(tileCoord, zoom, 'szum:t_map_sz_road_grid_ft');
+    }
+
+    obTraceLayer.getTilesUrl = function (tileCoord, zoom) {
+        return getTilesUrl(tileCoord, zoom, 'szum:t_map_grid_trace');
+    }
+
+    baRoadTileLayer.getTilesUrl = function (tileCoord, zoom) {
+        return getTilesUrl(tileCoord, zoom, 'szum:t_um_ob_trace_line');
+    }
+    bndLayer.getTilesUrl = function (tileCoord, zoom) {
+        return getTilesUrl(tileCoord, zoom, 'pg_ws:basq2');
+    }
+
+    managerGridTileLayer.getTilesUrl = function (tileCoord, zoom) {
+        return getTilesUrl(tileCoord, zoom, 'szum:manager_grid_online');
+    }
+
+    hwLayer.getTilesUrl = function (tileCoord, zoom) {
+        return getTilesUrl(tileCoord, zoom, 'szum:t_szcg_data_hw');
+    }
+    hxLayer.getTilesUrl = function (tileCoord, zoom) {
+        return getTilesUrl(tileCoord, zoom, 'szum:t_szcg_data_hx');
+    }
+    jdLayer.getTilesUrl = function (tileCoord, zoom) {
+        return getTilesUrl(tileCoord, zoom, 'szum:jd');
+    }
+
+    lhLayer.getTilesUrl = function (tileCoord, zoom) {
+        return getTilesUrl(tileCoord, zoom, 'szum:t_szcg_data_lh');
+    }
+
+    function getTilesUrl(tileCoord, zoom, layerName) {
+        var x = tileCoord.x;
+        var y = tileCoord.y;
+        var x = tileCoord.x;
+        var y = tileCoord.y;
+        //if (zoom <= 18) {
+        var PointConvert = new BaiduPointConvert(map); //百度坐标转换类
+        var lonlat_0 = PointConvert.tileToLngLat(tileCoord); //百度区块左下角经纬度
+        var tileCoord2 = new Object();
+        tileCoord2.x = x + 1;
+        tileCoord2.y = y + 1;
+        var lonlat2_0 = PointConvert.tileToLngLat(tileCoord2); //百度区块右上角经纬度
+        var bbox = [lonlat_0.lng, lonlat_0.lat, lonlat2_0.lng, lonlat2_0.lat];
+        var url = escape(geoserverUrl + '/geoserver/pg_ws/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true&tiled=true&STYLES&LAYERS=' + escape(layerName) + '&WIDTH=256&HEIGHT=256&SRS=EPSG%3A4326&BBOX=')
+            + bbox.join(',');
+        url = 'ASHX/OpenlayerProxy.ashx?url=' + url;
+        return url;
+        //}
+    }
+
+    function addControl() {
+        map.addTileLayer(tileLayer);
+        map.addTileLayer(obTraceLayer);
+        //map.addTileLayer(baRoadTileLayer);
+    }
+    function deleteControl() {
+        map.removeTileLayer(tileLayer);
+        map.removeTileLayer(obTraceLayer);
+        map.removeTileLayer(baRoadTileLayer);
+    }
+    //addControl();
+
+    map.addTileLayer(jdLayer);
+    var BaiduPointConvert = function (map) {
+        this.map = map;
+
+        //图块坐标转为球面坐标
+        this.tileToLngLat = function (pixel) {
+            return this.worldToLngLat(this.pixelToWorld(this.tileToPixel(pixel)));
+        }
+        //球面坐标转为图块坐标
+        this.lngLatToTile = function (lngLat) {
+            return this.pixelToTile(this.worldToPixel(this.lngLatToWorld(lngLat)));
+        }
+
+        //像素坐标转为球面坐标
+        this.pixelToLngLat = function (pixel) {
+            return this.worldToLngLat(this.pixelToWorld(pixel));
+        }
+        //球面坐标转为像素坐标
+        this.lngLatToPixel = function (lngLat) {
+            return this.worldToPixel(this.lngLatToWorld(lngLat));
+        }
+        //图块坐标转为像素坐标
+        this.tileToPixel = function (pixel) {
+            return new BMap.Pixel(pixel.x * 256,
+                pixel.y * 256);
+        }
+        //像素坐标转为平面坐标
+        this.pixelToWorld = function (pixel) {
+            var zoom = this.map.getZoom();
+            return new BMap.Pixel(pixel.x / Math.pow(2, zoom - 18),
+                pixel.y / Math.pow(2, zoom - 18));
+        }
+        //平面坐标转为球面坐标
+        this.worldToLngLat = function (pixel) {
+            var projection = this.map.getMapType().getProjection();
+            return projection.pointToLngLat(pixel)
+        }
+
+        //像素坐标转为图块坐标
+        this.pixelToTile = function (pixel) {
+            return new BMap.Pixel(pixel.x / 256,
+                pixel.y / 256);
+        }
+        //平面坐标转为像素坐标
+        this.worldToPixel = function (pixel) {
+            var zoom = this.map.getZoom();
+            return new BMap.Pixel(pixel.x * Math.pow(2, zoom - 18),
+                pixel.y * Math.pow(2, zoom - 18));
+        }
+        //球面坐标转为平面坐标
+        this.lngLatToWorld = function (lngLat) {
+            var projection = this.map.getMapType().getProjection();
+            return projection.lngLatToPoint(lngLat)
+        }
+    }
+
+
+    function getBoundary() {
+        var bdary = new BMap.Boundary();
+        bdary.get("深圳市", function (rs) {       //获取行政区域
+            map.clearOverlays();        //清除地图覆盖物
+            var count = rs.boundaries.length; //行政区域的点有多少个
+            if (count === 0) {
+                alert('未能获取当前输入行政区域');
+                return;
+            }
+            var pointArray = [];
+            for (var i = 0; i < count; i++) {
+                var ply = new BMap.Polygon(rs.boundaries[i], { strokeWeight: 2, strokeColor: "#ff0000", fillOpacity: 0.01 }); //建立多边形覆盖物
+                map.addOverlay(ply);  //添加覆盖物
+                pointArray = pointArray.concat(ply.getPath());
+            }
+            //map.setViewport(pointArray);    //调整视野
+        });
+    }
+    function resetMapZoom() {
+        //map.
+    }
+    setTimeout(function () {
+        //getBoundary();
+        map.addTileLayer(bndLayer);
+        //map.addTileLayer(managerGridTileLayer);
+
+    }, 10);
+
+    function showBnd() {
+        var bound = map.getBounds();
+        var northEast = bound.getNorthEast();
+        var southWest = bound.getSouthWest();
+        var info = "northEast:" + northEast.lat + "," + northEast.lng + "southWest:" + southWest.lat + "," + southWest.lng;
+        //info += "<br/>" + "northEasPoint:" + northEastPoint.x + "," + northEastPoint.y + "southWestPoint:" + southWestPoint.x + "," + southWestPoint.y;
+        info += "zoom:" + map.getZoom();
+        alert(info);
+    }
+    var polygon = null;
+    function showManagerGrid(workCode) {
+        var pointList = [];
+        var url = escape(geoserverUrl + "/geoserver/pg_ws/wfs?service=WFS&request=GetFeature&version=1.1.0&typename=manager_grid&outputFormat=json&cql_filter=WORKCODE='" + escape(workCode) + "'");
+        url = 'ASHX/OpenlayerProxy.ashx?url=' + url;
+        $.get(url, function (data) {
+            debugger
+            $(data.features[0].geometry.coordinates[0]).each(function (i, d) {
+                pointList.push(new BMap.Point(d[0], d[1]));
+            });
+            if (polygon != null) {
+                map.removeOverlay(polygon);
+            }
+            polygon = new BMap.Polygon(pointList, { fillColor: "rgb(188, 123, 177)", strokeColor: "rgb(47, 126, 235)", strokeWeight: 2, strokeOpacity: 1 });  //创建多边形
+            map.addOverlay(polygon);   //增加多边形
+            map.setViewport(pointList);
+            flashPolygon(polygon);
+
+        });
+    }
+
+    function flashPolygon(polygon) {//多边形闪烁
+        delay = 0;
+        for (flashTimes = 0; flashTimes < 5; flashTimes++) {
+            delay += 200;
+            setTimeout(function () {
+                polygon.setFillOpacity(0.1);
+            }, delay);
+
+            delay += 200;
+            setTimeout(function () {
+                polygon.setFillOpacity(0.5);
+            }, delay);
+        }
+    }
+
+
+    map.addEventListener("dragend", function () {
+        var bound = map.getBounds();
+        var northEast = bound.getNorthEast();
+        var southWest = bound.getSouthWest();
+
+        var projection = new BMap.MercatorProjection();
+        var northEastPoint = projection.lngLatToPoint(northEast);
+        var southWestPoint = projection.lngLatToPoint(southWest);
+        $("#divUrl").html("");
+        var info = "northEast:" + northEast.lat + "," + northEast.lng + "southWest:" + southWest.lat + "," + southWest.lng;
+        info += "<br/>" + "northEasPoint:" + northEastPoint.x + "," + northEastPoint.y + "southWestPoint:" + southWestPoint.x + "," + southWestPoint.y;
+        info += "zoom:" + map.getZoom();
+        $("#divUrl").html(info);
+
+        var cell = 50;//米一个格子
+        var xCellCount = (northEastPoint.x - southWestPoint.x) / cell;
+        var yCellCount = (northEastPoint.y - southWestPoint.y) / cell;
+
+        $("#divUrl").html($("#divUrl").html() + "<br/>xCellCount:" + xCellCount + ",yCellCount:" + yCellCount);
+
+        info = "<br/>xstep:" + (northEast.lng - southWest.lng) / xCellCount + "ystep:" + (northEast.lat - southWest.lat) / yCellCount;
+        $("#divUrl").html($("#divUrl").html() + info);
+    })
+
+    $(function () {
+        $("#chkTile").on("change", function (evt) {
+            if (evt.target.checked) {
+                addControl();
+            }
+            else {
+                deleteControl();
+            }
+        });
+
+        $("#chkManagerGrid").on("change", function (evt) {
+            if (evt.target.checked) {
+                map.addTileLayer(managerGridTileLayer);
+            }
+            else {
+                map.removeTileLayer(managerGridTileLayer);
+            }
+        })
+
+        $("#chkHw").on("change", function (evt) {
+            if (evt.target.checked) {
+                map.addTileLayer(hwLayer);
+            }
+            else {
+                map.removeTileLayer(hwLayer);
+            }
+        })
+        $("#chkHx").on("change", function (evt) {
+            if (evt.target.checked) {
+                map.addTileLayer(hxLayer);
+            }
+            else {
+                map.removeTileLayer(hxLayer);
+            }
+        })
+        $("#chkLh").on("change", function (evt) {
+            if (evt.target.checked) {
+                map.addTileLayer(lhLayer);
+            }
+            else {
+                map.removeTileLayer(lhLayer);
+            }
+        })
+    })
+</script>
