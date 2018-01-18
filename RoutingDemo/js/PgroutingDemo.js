@@ -35,6 +35,7 @@ function addPointFeature(point, imageUrl) {
         })
     }));
     vectorLayer.getSource().addFeature(anchor);
+
     return anchor;
 }
 
@@ -216,4 +217,14 @@ function drawLine(x1, y1, x2, y2, isStart) {
         endLine.setStyle(style);
         lineLayer.getSource().addFeature(endLine);
     }
+}
+
+//获取要素的wkt
+//http://openlayers.org/en/latest/apidoc/ol.format.html
+function getWKT(yourFeature) {
+    if (yourFeature != null) {
+        var format = new ol.format.WKT();
+        return format.writeGeometry(yourFeature.getGeometry());
+    }
+    return "";
 }
