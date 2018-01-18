@@ -60,6 +60,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="ASHX\OpenlayerProxy.ashx" />
+    <Content Include="img\end_point.png" />
+    <Content Include="img\start_point.png" />
+    <Content Include="js\PgroutingDemo.js" />
     <Content Include="README.md" />
     <Content Include="packages.config" />
     <None Include="Dockerfile" />
