@@ -4,6 +4,9 @@ var format = 'image/png';
 var bounds = [501369.9375, 2494100.25,
     502073, 2495256.25];
 
+
+var startLine = null, endLine = null;
+
 var mousePositionControl = new ol.control.MousePosition({
     className: 'custom-mouse-position',
     target: document.getElementById('location'),
@@ -14,6 +17,11 @@ var mousePositionControl = new ol.control.MousePosition({
 var vectorLayer = new ol.layer.Vector({
     source: new ol.source.Vector()
 })
+
+var lineLayer = new ol.layer.Vector({
+    source: new ol.source.Vector()
+});
+
 
 
 function addPointFeature(point, imageUrl) {
@@ -70,7 +78,7 @@ var map = new ol.Map({
     }).extend([mousePositionControl]),
     target: 'map',
     layers: [
-        tiled, cross_tiled, vectorLayer
+        tiled, cross_tiled, vectorLayer, lineLayer
     ],
     view: new ol.View({
         projection: projection
@@ -139,12 +147,16 @@ $(function () {
 
 
     moddify_start.on('modifyend', function (evt) {
-        $("#spanStart").html(evt.mapBrowserPointerEvent.coordinate.join(","));
+        var point = evt.mapBrowserPointerEvent.coordinate;
+        $("#spanStart").html(point.join(","));
+        getPointNearby(point[0], point[1], "id1","txtPointStart");
     }, feature_start);
 
 
     moddify_end.on('modifyend', function (evt) {
-        console.log(evt.mapBrowserPointerEvent.coordinate.join(","));
+        var point = evt.mapBrowserPointerEvent.coordinate;
+        getPointNearby(point[0], point[1], "id2","txtPointEnd");
+        //console.log(evt.mapBrowserPointerEvent.coordinate.join(","));
         $("#spanEnd").html(evt.mapBrowserPointerEvent.coordinate.join(","));
     }, feature_end);
 
@@ -153,3 +165,55 @@ $(function () {
     map.addInteraction(moddify_start);
     map.addInteraction(moddify_end);
 })
+
+
+
+function getPointNearby(x, y, eleId,pointId) {
+    $.ajax({
+        type: "get",
+        url: "ashx/DataHandler.ashx",
+        data: { "x": x, "y": y },
+        success: function (data) {
+            $("#" + eleId).val(data.Id);
+            $("#" + pointId).val(data.X + "," + data.Y);
+            var isStart = eleId == "id1";
+            drawLine(x, y, data.X, data.Y, isStart);
+        },
+        error: function (XMLHttpRequest, textStatus, errorThrown) {
+            alert(textStatus);
+        }
+    })
+}
+//回执导航起止线
+function drawLine(x1, y1, x2, y2, isStart) {
+    var style = new ol.style.Style({
+        fill: new ol.style.Fill({
+            color: '#0044CC'
+        }),
+        stroke: new ol.style.Stroke({
+            lineDash: [1, 2, 3, 4, 5, 6],
+            color: '#0044CC',
+            width: 4
+        })
+    });
+    if (isStart) {
+        if (startLine != null) {
+            lineLayer.getSource().removeFeature(startLine);
+        }
+        startLine = new ol.Feature({
+            geometry: new ol.geom.LineString([[x1, y1], [x2, y2]], "XY")
+        });
+        startLine.setStyle(style);
+        lineLayer.getSource().addFeature(startLine);
+    }
+    else {
+        if (endLine != null) {
+            lineLayer.getSource().removeFeature(endLine);
+        }
+        endLine = new ol.Feature({
+            geometry: new ol.geom.LineString([[x1, y1], [x2, y2]], "XY")
+        });
+        endLine.setStyle(style);
+        lineLayer.getSource().addFeature(endLine);
+    }
+}
