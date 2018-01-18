@@ -167,7 +167,7 @@ $(function () {
 })
 
 
-
+//根据坐标点获取拓扑网络中的导航点
 function getPointNearby(x, y, eleId,pointId) {
     $.ajax({
         type: "get",
@@ -184,7 +184,7 @@ function getPointNearby(x, y, eleId,pointId) {
         }
     })
 }
-//回执导航起止线
+//绘制导航起止线
 function drawLine(x1, y1, x2, y2, isStart) {
     var style = new ol.style.Style({
         fill: new ol.style.Fill({
