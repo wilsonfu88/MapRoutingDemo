@@ -5,9 +5,15 @@
 
 
 使用pGrouting的坑
+
 1、必须通过拓扑打断相交线，一般使用Arcgis工具，见https://www.cnblogs.com/gotoschool/p/6371104.html
 
 2、通过PostGISShapefile 导入shp空间数据必须勾选简单类型，如果导入的是muti类型，拓扑网点将计算失败
+
+
+详见博客文章：
+
+http://www.cnblogs.com/weiweictgu/p/8280285.html
 
 
 最终实现的效果见：
