@@ -75,3 +75,41 @@ target,
 cost,reverse_cost
 FROM edge_table',%a%, %b%,true) b
 on a.id = b.edge
+
+
+
+用pgrouting对openstreetmap数据进行路径分析
+
+1，将道路osm数据增加列字段
+
+ALTER TABLE changsharoad_connected ADD COLUMN source integer;
+
+ALTER TABLE changsharoad_connected ADD COLUMN target integer;
+ALTER TABLE changsharoad_connected ADD COLUMN length double precision;
+ALTER TABLE changsharoad_connected ADD COLUMN cost double precision;
+ALTER TABLE changsharoad_connected ADD COLUMN reverse_cost double precision;
+
+2，创建拓扑及索引
+SELECT pgr_createTopology('changsharoad_connected',0.000001, 'geom', 'gid');
+create index road_source_idx on changsharoad_connected("source");
+create index road_target_idx on changsharoad_connected("target");
+
+3，分析单双向
+SELECT pgr_analyzeOneway('changsharoad_connected', ARRAY['', 'B', 'T'], ARRAY['', 'B', 'F'],ARRAY['', 'B', 'F'], ARRAY['', 'B', 'T'])
+update changsharoad_connected set length = ST_LengthSpheroid(geom, 'SPHEROID["WGS 84",6378137,298.257223563]');
+update changsharoad_connected set cost=length where oneway='B' or oneway='F'
+update changsharoad_connected set cost=-length where oneway='T'
+update changsharoad_connected set reverse_cost=-length where oneway='F'
+update changsharoad_connected set reverse_cost=length where oneway='B' or oneway='T'
+
+4，最短路径分析
+drop table if exists dijkstra_res;
+SELECT seq, id1 AS node, id2 AS edge, a.cost as cost, geom into dijkstra_res FROM pgr_dijkstra('     
+    SELECT gid AS id,
+        source::integer,
+        target::integer,
+        cost::double precision AS cost,
+        reverse_cost::double precision AS reverse_cost
+    FROM changsharoad_connected', 20946, 19758, true, true)a 
+LEFT JOIN changsharoad_connected b 
+ON (a.id2 = b.gid) order by seq;
