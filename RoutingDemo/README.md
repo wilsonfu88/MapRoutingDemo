@@ -56,8 +56,10 @@ WHEN (cost>0 AND reverse_cost<0) THEN 'FT' -- direction of the LINESSTRING 正�
 WHEN (cost<0 AND reverse_cost>0) THEN 'TF' -- reverse direction of the LINESTRING 反向同行
 ELSE '' END; -- unknown
 
+--创建路网拓扑表
 SELECT pgr_createTopology('edge_table',0.001,'the_geom','id','source','target',clean:=true);
 
+--分析边缘表的边缘和顶点
 SELECT pgr_analyzeGraph('edge_table',0.001,'the_geom','id','source','target');
 
 
